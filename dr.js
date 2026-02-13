@@ -74,7 +74,8 @@ document.getElementById('workerTableBody').addEventListener('contextmenu', funct
     workerRowDeleteBtn.style.top = e.clientY + 4 + 'px';
 });
 if (workerRowDeleteBtn) {
-    workerRowDeleteBtn.addEventListener('click', function () {
+    workerRowDeleteBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
         if (workerRowDeleteTarget && workerRowDeleteTarget.parentNode) {
             workerRowDeleteTarget.parentNode.removeChild(workerRowDeleteTarget);
             updateWorkerTotals();
