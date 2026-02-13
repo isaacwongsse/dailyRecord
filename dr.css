@@ -144,7 +144,7 @@ body {
     }
     
     /* Hide empty photo slots (no image uploaded) in print */
-    .photo-item:has(.photo-upload:not(:has(img))) {
+    .photo-item:has(.photo-upload:not(.has-photo)) {
         display: none !important;
     }
     

@@ -547,6 +547,7 @@ function displayPhotoFromDataUrl(element, dataUrl) {
     removeBtn.innerHTML = '×';
     removeBtn.onclick = (e) => { e.stopPropagation(); removePhoto(element); };
     element.appendChild(removeBtn);
+    element.classList.add('has-photo');
 }
 
 function displayPhoto(element, file) {
@@ -585,6 +586,7 @@ function displayPhoto(element, file) {
                 removePhoto(element);
             };
             element.appendChild(removeBtn);
+            element.classList.add('has-photo');
         };
         img.src = e.target.result;
     };
@@ -606,6 +608,7 @@ function removePhoto(element) {
         removePhoto(element);
     };
     element.appendChild(removeBtn);
+    element.classList.remove('has-photo');
 }
 
 function addPhotoPage() {
