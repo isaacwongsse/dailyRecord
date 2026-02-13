@@ -494,8 +494,10 @@ function addPhotosToStore(files) {
 
 function renderPhotoPanelThumbnails() {
     const list = document.getElementById('photoPanelList');
+    const emptyHint = document.getElementById('photoPanelListEmptyHint');
     if (!list) return;
     list.innerHTML = '';
+    if (emptyHint) emptyHint.classList.toggle('hidden', photoStore.length > 0);
     const sorted = [...photoStore].sort((a, b) => (a.captureDate || 0) - (b.captureDate || 0));
     sorted.forEach((item) => {
         const div = document.createElement('div');
@@ -558,21 +560,35 @@ function handleQuickDispatchDoubleClick(photoId) {
 }
 
 (function setupPhotoPanel() {
-    const zone = document.getElementById('photoPanelUploadZone');
     const input = document.getElementById('photoPanelFileInput');
-    if (!zone || !input) return;
-    zone.addEventListener('click', () => input.click());
-    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-    zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('dragover');
-        addPhotosToStore(e.dataTransfer.files);
-    });
-    input.addEventListener('change', (e) => {
-        addPhotosToStore(e.target.files);
-        e.target.value = '';
-    });
+    const addPhotosBtn = document.getElementById('addPhotosBtn');
+    const photoPanelList = document.getElementById('photoPanelList');
+    if (input) {
+        input.addEventListener('change', (e) => {
+            addPhotosToStore(e.target.files);
+            e.target.value = '';
+        });
+    }
+    if (addPhotosBtn && input) {
+        addPhotosBtn.addEventListener('click', () => input.click());
+    }
+    if (photoPanelList) {
+        photoPanelList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            photoPanelList.classList.add('dragover');
+        });
+        photoPanelList.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            if (!photoPanelList.contains(e.relatedTarget)) photoPanelList.classList.remove('dragover');
+        });
+        photoPanelList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            photoPanelList.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) addPhotosToStore(e.dataTransfer.files);
+        });
+    }
 
     const quickDispatchBtn = document.getElementById('quickDispatchBtn');
     const quickDispatchHint = document.getElementById('quickDispatchHint');
@@ -583,6 +599,35 @@ function handleQuickDispatchDoubleClick(photoId) {
             quickDispatchBtn.textContent = quickDispatchEnabled ? 'Quick Dispatch (ON)' : 'Quick Dispatch';
             quickDispatchHint.style.display = quickDispatchEnabled ? 'block' : 'none';
             renderPhotoPanelThumbnails();
+        });
+    }
+
+    // Photo thumbnail size slider – smooth updates via rAF, save only on release
+    const photoThumbSizeSlider = document.getElementById('photoThumbSizeSlider');
+    const photoThumbSizeValue = document.getElementById('photoThumbSizeValue');
+    const PHOTO_THUMB_SIZE_KEY = 'dailyReportPhotoThumbSize';
+    if (photoThumbSizeSlider && photoThumbSizeValue && photoPanelList) {
+        const savedSize = localStorage.getItem(PHOTO_THUMB_SIZE_KEY);
+        if (savedSize !== null) {
+            const n = parseInt(savedSize, 10);
+            if (n >= 60 && n <= 300) {
+                photoThumbSizeSlider.value = n;
+                photoThumbSizeValue.textContent = n;
+                photoPanelList.style.setProperty('--photo-thumb-min', n + 'px');
+            }
+        }
+        let thumbSizeRaf = null;
+        photoThumbSizeSlider.addEventListener('input', function () {
+            const px = this.value;
+            if (thumbSizeRaf !== null) cancelAnimationFrame(thumbSizeRaf);
+            thumbSizeRaf = requestAnimationFrame(function () {
+                thumbSizeRaf = null;
+                photoThumbSizeValue.textContent = px;
+                photoPanelList.style.setProperty('--photo-thumb-min', px + 'px');
+            });
+        });
+        photoThumbSizeSlider.addEventListener('change', function () {
+            localStorage.setItem(PHOTO_THUMB_SIZE_KEY, this.value);
         });
     }
 })();

@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Report Generator</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232196F3'/%3E%3Crect x='8' y='6' width='16' height='2' rx='1' fill='white'/%3E%3Crect x='8' y='11' width='12' height='2' rx='1' fill='white' opacity='.8'/%3E%3Crect x='8' y='16' width='14' height='2' rx='1' fill='white' opacity='.6'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="dr.css">
+    <link rel="stylesheet" href="dr.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="app-layout">
@@ -13,28 +14,33 @@
             <div class="photo-panel-title">
                 <span>Photo library</span>
                 <div class="photo-panel-title-actions">
+                    <button type="button" class="quick-dispatch-btn" id="quickDispatchBtn">Quick Dispatch</button>
                     <button type="button" class="project-btn" id="projectBtn">Project</button>
                     <div class="project-dropdown no-print" id="projectDropdown">
                         <button type="button" class="project-dropdown-item" data-project="ward1c">Ward 1C</button>
                         <button type="button" class="project-dropdown-item" data-project="coveredwalkway">Covered walkway</button>
                     </div>
+                    <button type="button" class="add-photos-btn" id="addPhotosBtn">+ photos</button>
                 </div>
             </div>
-            <div class="photo-panel-quick-dispatch">
-                <div class="toggle-wrap">
-                    <button type="button" class="quick-dispatch-btn" id="quickDispatchBtn">Quick Dispatch</button>
+            <div class="photo-panel-thumb-size">
+                <div class="photo-thumb-size-row">
+                    <label for="photoThumbSizeSlider" class="photo-thumb-size-label">Photo size</label>
+                    <span class="photo-thumb-size-value" id="photoThumbSizeValue">80</span><span class="photo-thumb-size-unit">px</span>
+                </div>
+                <input type="range" id="photoThumbSizeSlider" class="photo-thumb-size-slider" min="60" max="300" value="80" step="1" title="Resize thumbnails">
+                <div class="quick-dispatch-hint-wrap">
                     <span class="quick-dispatch-hint" id="quickDispatchHint" style="display:none;">Double-click a photo in the preview area to automatically send it to the photo page containers in order. Double-click the last dispatched photo to undo the dispatch.</span>
                 </div>
             </div>
-            <div class="photo-panel-upload">
-                <div class="photo-panel-upload-zone" id="photoPanelUploadZone">
-                    <p>📷 Drop photos here or click to add</p>
-                </div>
+            <div class="photo-panel-list-wrap">
+                <div class="photo-panel-list" id="photoPanelList"></div>
+                <p class="photo-panel-list-empty-hint" id="photoPanelListEmptyHint">Drag and drop photos here to upload</p>
             </div>
-            <div class="photo-panel-list" id="photoPanelList"></div>
         </aside>
         <div class="photo-panel-resize-handle no-print" id="photoPanelResizeHandle" title="Drag to resize"></div>
-        <main class="app-main" id="appMain">
+        <div class="app-main-wrap">
+            <main class="app-main" id="appMain">
             <div class="container-scale-wrapper" id="containerScaleWrapper">
             <div class="container" id="mainContainer">
                 <!-- Page 1: Main Report -->
@@ -106,7 +112,6 @@
                         </table>
                         <button class="add-row-btn" onclick="addWorkerRow()">+ Add Row</button>
                     </div>
-                    <button type="button" class="worker-row-delete-btn no-print" id="workerRowDeleteBtn">Delete</button>
                 </div>
 
                 <div class="page" id="photoPage1">
@@ -116,13 +121,15 @@
             </div>
             </div>
         </main>
+            <div class="controls no-print">
+                <button type="button" class="controls-btn print-btn" onclick="printReport()" title="Print Report"><i class="fa-solid fa-print"></i></button>
+                <button type="button" class="controls-btn add-page-btn" onclick="addPhotoPage()" title="Add Photo Page"><i class="fa-solid fa-file-circle-plus"></i></button>
+                <button type="button" class="controls-btn delete-page-btn" id="deletePhotoPageBtn" onclick="deleteLastPhotoPage()" title="Cannot delete first or second page"><i class="fa-solid fa-file-circle-minus"></i></button>
+            </div>
+        </div>
     </div>
 
-    <div class="controls no-print">
-        <button class="print-btn" onclick="printReport()">🖨️ Print Report</button>
-        <button onclick="addPhotoPage()">➕ Add Photo Page</button>
-        <button type="button" id="deletePhotoPageBtn" onclick="deleteLastPhotoPage()" title="Cannot delete first or second page">🗑️ Delete Photo Page</button>
-    </div>
+    <button type="button" class="worker-row-delete-btn no-print" id="workerRowDeleteBtn">Delete</button>
 
     <input type="file" id="drawingFileInput" accept=".pdf">
     <input type="file" id="photoFileInput" accept="image/*" multiple>
@@ -130,6 +137,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.js"></script>
-    <script src="dr.js"></script>
+    <script src="dr.js?v=2"></script>
 </body>
 </html>
