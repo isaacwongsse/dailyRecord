@@ -10,7 +10,16 @@
 <body>
     <div class="app-layout">
         <aside class="photo-panel no-print" id="photoPanel">
-            <div class="photo-panel-title">Photo library</div>
+            <div class="photo-panel-title">
+                <span>Photo library</span>
+                <div class="photo-panel-title-actions">
+                    <button type="button" class="project-btn" id="projectBtn">Project</button>
+                    <div class="project-dropdown no-print" id="projectDropdown">
+                        <button type="button" class="project-dropdown-item" data-project="ward1c">Ward 1C</button>
+                        <button type="button" class="project-dropdown-item" data-project="coveredwalkway">Covered walkway</button>
+                    </div>
+                </div>
+            </div>
             <div class="photo-panel-quick-dispatch">
                 <div class="toggle-wrap">
                     <button type="button" class="quick-dispatch-btn" id="quickDispatchBtn">Quick Dispatch</button>
@@ -24,6 +33,7 @@
             </div>
             <div class="photo-panel-list" id="photoPanelList"></div>
         </aside>
+        <div class="photo-panel-resize-handle no-print" id="photoPanelResizeHandle" title="Drag to resize"></div>
         <main class="app-main" id="appMain">
             <div class="container-scale-wrapper" id="containerScaleWrapper">
             <div class="container" id="mainContainer">

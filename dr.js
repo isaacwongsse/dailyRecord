@@ -729,3 +729,101 @@ function updateContainerScale() {
 
 window.addEventListener('resize', updateContainerScale);
 setTimeout(updateContainerScale, 150);
+
+// Photo panel resize handle
+const PHOTO_PANEL_MIN_WIDTH = 280;
+const PHOTO_PANEL_MAX_WIDTH_PCT = 0.8;
+const PHOTO_PANEL_DEFAULT_WIDTH_PCT = 0.5;
+
+let photoPanelResizing = false;
+let photoPanelStartX = 0;
+let photoPanelStartWidth = 0;
+
+const resizeHandle = document.getElementById('photoPanelResizeHandle');
+const photoPanelEl = document.getElementById('photoPanel');
+
+function getPhotoPanelWidthPx() {
+    if (!photoPanelEl) return 0;
+    const w = photoPanelEl.offsetWidth;
+    return w;
+}
+
+function setPhotoPanelWidthPx(px) {
+    if (!photoPanelEl) return;
+    const layout = document.querySelector('.app-layout');
+    if (!layout) return;
+    const total = layout.clientWidth;
+    const pct = Math.max(PHOTO_PANEL_MIN_WIDTH / total, Math.min(PHOTO_PANEL_MAX_WIDTH_PCT, px / total));
+    photoPanelEl.style.width = (pct * 100) + '%';
+    photoPanelEl.style.minWidth = PHOTO_PANEL_MIN_WIDTH + 'px';
+    photoPanelEl.style.maxWidth = (PHOTO_PANEL_MAX_WIDTH_PCT * 100) + '%';
+    updateContainerScale();
+}
+
+if (resizeHandle && photoPanelEl) {
+    resizeHandle.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        photoPanelResizing = true;
+        photoPanelStartX = e.clientX;
+        photoPanelStartWidth = getPhotoPanelWidthPx();
+    });
+}
+
+document.addEventListener('mousemove', function (e) {
+    if (!photoPanelResizing) return;
+    const dx = e.clientX - photoPanelStartX;
+    const newWidth = photoPanelStartWidth + dx;
+    setPhotoPanelWidthPx(newWidth);
+});
+
+document.addEventListener('mouseup', function () {
+    photoPanelResizing = false;
+});
+
+// Project selection: data and auto-fill
+const PROJECT_DATA = {
+    ward1c: {
+        header: 'Progress Photos of Ward 1C in Main Block of TPH',
+        projectTitle: 'PMN25-606 _ Renovation of Ward 1C in the Main Block of Tai Po Hospital',
+        location: 'Ward 1C, 1/F., Main Block, TPH'
+    },
+    coveredwalkway: {
+        header: 'Progress Photo of Covered Walkway between AHNH and TPH',
+        projectTitle: 'Covered walkway between AHNH and TPH',
+        location: 'Car Park, G/F., TPH'
+    }
+};
+
+const projectBtn = document.getElementById('projectBtn');
+const projectDropdown = document.getElementById('projectDropdown');
+
+if (projectBtn && projectDropdown) {
+    projectBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        projectDropdown.classList.toggle('show');
+    });
+
+    projectDropdown.querySelectorAll('.project-dropdown-item').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const key = btn.getAttribute('data-project');
+            const data = PROJECT_DATA[key];
+            if (data) {
+                const headerEl = document.getElementById('header');
+                const projectTitleEl = document.getElementById('projectTitle');
+                const locationEl = document.getElementById('location');
+                if (headerEl) headerEl.textContent = data.header;
+                if (projectTitleEl) projectTitleEl.textContent = data.projectTitle;
+                if (locationEl) locationEl.textContent = data.location;
+            }
+            projectDropdown.classList.remove('show');
+        });
+    });
+}
+
+document.addEventListener('click', function () {
+    if (projectDropdown && projectDropdown.classList.contains('show')) {
+        projectDropdown.classList.remove('show');
+    }
+});
