@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Report Generator</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232196F3'/%3E%3Crect x='8' y='6' width='16' height='2' rx='1' fill='white'/%3E%3Crect x='8' y='11' width='12' height='2' rx='1' fill='white' opacity='.8'/%3E%3Crect x='8' y='16' width='14' height='2' rx='1' fill='white' opacity='.6'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="dr.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="photo-panel no-print" id="photoPanel">
+            <div class="photo-panel-title">Photo library</div>
+            <div class="photo-panel-quick-dispatch">
+                <div class="toggle-wrap">
+                    <button type="button" class="quick-dispatch-btn" id="quickDispatchBtn">Quick Dispatch</button>
+                    <span class="quick-dispatch-hint" id="quickDispatchHint" style="display:none;">Double-click a photo in the preview area to automatically send it to the photo page containers in order. Double-click the last dispatched photo to undo the dispatch.</span>
+                </div>
+            </div>
+            <div class="photo-panel-upload">
+                <div class="photo-panel-upload-zone" id="photoPanelUploadZone">
+                    <p>📷 Drop photos here or click to add</p>
+                </div>
+            </div>
+            <div class="photo-panel-list" id="photoPanelList"></div>
+        </aside>
+        <main class="app-main" id="appMain">
+            <div class="container-scale-wrapper" id="containerScaleWrapper">
+            <div class="container" id="mainContainer">
+                <!-- Page 1: Main Report -->
+                <div class="page" id="page1">
+                    <h1 class="editable" contenteditable="true" id="header">Progress Photos Record</h1>
+
+                    <div class="project-info">
+                        <table>
+                            <tr>
+                                <td>Project Title:</td>
+                                <td class="editable" contenteditable="true" id="projectTitle"></td>
+                            </tr>
+                            <tr>
+                                <td>Location:</td>
+                                <td class="editable" contenteditable="true" id="location"></td>
+                            </tr>
+                            <tr>
+                                <td>Inspection Date:</td>
+                                <td class="inspection-date-wrap">
+                                    <input type="date" id="inspectionDate">
+                                    <span id="inspectionDateWeekday"></span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="location-plan">
+                        <h3>Location Plan</h3>
+                        <div class="drawing-container" id="drawingContainer">
+                            <div class="drawing-upload" id="drawingUpload">
+                                <div class="placeholder-text">
+                                    <p>📄 Drag and drop PDF drawing here</p>
+                                    <p>or click to browse</p>
+                                </div>
+                            </div>
+                            <canvas id="drawingCanvas" class="drawing-canvas" style="display: none;"></canvas>
+                        </div>
+                    </div>
+                    <div class="drawing-context-menu no-print" id="drawingContextMenu">
+                        <button type="button" id="drawingMenuRotate">Rotate</button>
+                        <button type="button" id="drawingMenuReset">Reset</button>
+                        <button type="button" class="remove-drawing-btn" id="drawingMenuRemove">Remove</button>
+                    </div>
+
+                    <div class="worker-table">
+                        <h3 class="editable" contenteditable="true" id="workerTableHeader">Number of Workers</h3>
+                        <table id="workerTable">
+                            <thead>
+                                <tr>
+                                    <th>Worker category</th>
+                                    <th>Builder's Works</th>
+                                    <th>Building Services</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workerTableBody">
+                                <tr><td><input type="text" value="" placeholder=""></td><td><input type="number" value=""></td><td><input type="number" value=""></td></tr>
+                                <tr><td><input type="text" value="" placeholder=""></td><td><input type="number" value=""></td><td><input type="number" value=""></td></tr>
+                                <tr><td><input type="text" value="" placeholder=""></td><td><input type="number" value=""></td><td><input type="number" value=""></td></tr>
+                                <tr><td><input type="text" value="" placeholder=""></td><td><input type="number" value=""></td><td><input type="number" value=""></td></tr>
+                                <tr><td><input type="text" value="" placeholder=""></td><td><input type="number" value=""></td><td><input type="number" value=""></td></tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Daily Total</th>
+                                    <th id="builderTotal">0</th>
+                                    <th id="servicesTotal">0</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="add-row-btn" onclick="addWorkerRow()">+ Add Row</button>
+                    </div>
+                    <button type="button" class="worker-row-delete-btn no-print" id="workerRowDeleteBtn">Delete</button>
+                </div>
+
+                <div class="page" id="photoPage1">
+                    <h2 class="photo-page-header">Progress Photos</h2>
+                    <div class="photo-grid" id="photoGrid1"></div>
+                </div>
+            </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="controls no-print">
+        <button class="print-btn" onclick="printReport()">🖨️ Print Report</button>
+        <button onclick="addPhotoPage()">➕ Add Photo Page</button>
+        <button type="button" id="deletePhotoPageBtn" onclick="deleteLastPhotoPage()" title="Cannot delete first or second page">🗑️ Delete Photo Page</button>
+    </div>
+
+    <input type="file" id="drawingFileInput" accept=".pdf">
+    <input type="file" id="photoFileInput" accept="image/*" multiple>
+    <input type="file" id="photoPanelFileInput" accept="image/*" multiple style="display:none">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="dr.js"></script>
+</body>
+</html>
