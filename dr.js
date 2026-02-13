@@ -305,6 +305,106 @@ document.addEventListener('mouseup', () => {
     drawingData.isDragging = false;
 });
 
+// iPad / touch: two-finger pan (content tracks fingers), pinch = zoom only, long-press (0.5s) = right-click
+let touchLongPressTimer = null;
+let touchStartDistance = 0;
+let touchStartScale = 1;
+let lastTouchCenterX = 0;
+let lastTouchCenterY = 0;
+
+function getTouchCenter(touches) {
+    return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+}
+
+function getTouchDistance(touches) {
+    const a = touches[0].clientX - touches[1].clientX;
+    const b = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(a * a + b * b);
+}
+
+function clearLongPressTimer() {
+    if (touchLongPressTimer) {
+        clearTimeout(touchLongPressTimer);
+        touchLongPressTimer = null;
+    }
+}
+
+function showContextMenuAt(clientX, clientY) {
+    if (drawingCanvas.style.display !== 'block' || !drawingData.pdfDoc) return;
+    drawingContextMenu.style.display = 'block';
+    drawingContextMenu.style.left = clientX + 'px';
+    drawingContextMenu.style.top = clientY + 'px';
+}
+
+drawingContainer.addEventListener('touchstart', function (e) {
+    if (drawingCanvas.style.display !== 'block' || !drawingData.pdfDoc) return;
+    if (e.touches.length === 1) {
+        e.preventDefault();
+        clearLongPressTimer();
+        const touch = e.touches[0];
+        touchLongPressTimer = setTimeout(function () {
+            touchLongPressTimer = null;
+            showContextMenuAt(touch.clientX, touch.clientY);
+        }, 500);
+    } else if (e.touches.length === 2) {
+        clearLongPressTimer();
+        e.preventDefault();
+        const rect = drawingContainer.getBoundingClientRect();
+        const center = getTouchCenter(e.touches);
+        lastTouchCenterX = center.x - rect.left;
+        lastTouchCenterY = center.y - rect.top;
+        touchStartDistance = getTouchDistance(e.touches);
+        touchStartScale = drawingData.scale;
+    }
+}, { passive: false });
+
+drawingContainer.addEventListener('touchmove', function (e) {
+    if (drawingCanvas.style.display !== 'block' || !drawingData.pdfDoc) return;
+    if (e.touches.length === 1) {
+        clearLongPressTimer();
+    } else if (e.touches.length === 2) {
+        e.preventDefault();
+        const rect = drawingContainer.getBoundingClientRect();
+        const center = getTouchCenter(e.touches);
+        const centerX = center.x - rect.left;
+        const centerY = center.y - rect.top;
+        const dist = getTouchDistance(e.touches);
+
+        // Pan: content tracks finger movement (add center delta to offset)
+        drawingData.offsetX += (centerX - lastTouchCenterX);
+        drawingData.offsetY += (centerY - lastTouchCenterY);
+
+        // Zoom: only from pinch (distance change); zoom toward current finger center
+        const newScale = Math.max(0.2, Math.min(8, touchStartScale * (dist / touchStartDistance)));
+        drawingData.offsetX = centerX - (centerX - drawingData.offsetX) * newScale / drawingData.scale;
+        drawingData.offsetY = centerY - (centerY - drawingData.offsetY) * newScale / drawingData.scale;
+        drawingData.scale = newScale;
+
+        lastTouchCenterX = centerX;
+        lastTouchCenterY = centerY;
+        renderPDF();
+    }
+}, { passive: false });
+
+drawingContainer.addEventListener('touchend', function (e) {
+    if (e.touches.length < 2) clearLongPressTimer();
+    if (e.touches.length === 2) {
+        const rect = drawingContainer.getBoundingClientRect();
+        const center = getTouchCenter(e.touches);
+        lastTouchCenterX = center.x - rect.left;
+        lastTouchCenterY = center.y - rect.top;
+        touchStartDistance = getTouchDistance(e.touches);
+        touchStartScale = drawingData.scale;
+    }
+}, { passive: true });
+
+drawingContainer.addEventListener('touchcancel', function (e) {
+    clearLongPressTimer();
+}, { passive: true });
+
 // Photo handling
 function initializePhotoPage(pageNum) {
     const grid = document.getElementById(`photoGrid${pageNum}`);
