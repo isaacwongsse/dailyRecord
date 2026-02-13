@@ -428,18 +428,66 @@ function resizeImageToDataUrl(file, maxSize) {
     });
 }
 
+/** Resize an already-loaded Image element to data URL (used when we have img + EXIF in one load). */
+function resizeImageElementToDataUrl(img, maxSize) {
+    const limit = maxSize || MAX_PHOTO_SIZE;
+    let w = img.width, h = img.height;
+    if (w > limit || h > limit) {
+        if (w > h) {
+            h = Math.round((h * limit) / w);
+            w = limit;
+        } else {
+            w = Math.round((w * limit) / h);
+            h = limit;
+        }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', PHOTO_QUALITY);
+}
+
+/** Parse EXIF DateTimeOriginal "YYYY:MM:DD HH:MM:SS" to timestamp; return 0 if missing/invalid. */
+function parseExifDate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return 0;
+    const parts = dateStr.trim().split(/\s+/);
+    if (parts.length < 2) return 0;
+    const iso = parts[0].replace(/:/g, '-') + 'T' + parts[1];
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
 function addPhotosToStore(files) {
     if (!files || !files.length) return;
     [].forEach.call(files, (file) => {
         if (!file.type.startsWith('image/')) return;
-        Promise.all([
-            resizeImageToDataUrl(file, PANEL_THUMB_MAX),
-            resizeImageToDataUrl(file, MAX_PHOTO_SIZE)
-        ]).then(([thumbnailDataUrl, dataUrl]) => {
-            const id = 'p' + (nextPhotoStoreId++);
-            photoStore.push({ id, dataUrl, thumbnailDataUrl });
-            renderPhotoPanelThumbnails();
-        }).catch(() => {});
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const done = (captureDate) => {
+                    const thumbnailDataUrl = resizeImageElementToDataUrl(img, PANEL_THUMB_MAX);
+                    const dataUrl = resizeImageElementToDataUrl(img, MAX_PHOTO_SIZE);
+                    const id = 'p' + (nextPhotoStoreId++);
+                    photoStore.push({ id, dataUrl, thumbnailDataUrl, captureDate });
+                    renderPhotoPanelThumbnails();
+                };
+                if (typeof EXIF === 'undefined') {
+                    done(0);
+                    return;
+                }
+                EXIF.getData(img, function () {
+                    const dateStr = EXIF.getTag(this, 'DateTimeOriginal');
+                    const captureDate = parseExifDate(dateStr);
+                    done(captureDate);
+                });
+            };
+            img.onerror = () => {};
+            img.src = e.target.result;
+        };
+        reader.onerror = () => {};
+        reader.readAsDataURL(file);
     });
 }
 
@@ -447,7 +495,8 @@ function renderPhotoPanelThumbnails() {
     const list = document.getElementById('photoPanelList');
     if (!list) return;
     list.innerHTML = '';
-    photoStore.forEach((item) => {
+    const sorted = [...photoStore].sort((a, b) => (a.captureDate || 0) - (b.captureDate || 0));
+    sorted.forEach((item) => {
         const div = document.createElement('div');
         div.className = 'photo-panel-thumb';
         div.draggable = true;
