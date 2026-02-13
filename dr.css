@@ -143,6 +143,11 @@ body {
         display: none !important;
     }
     
+    /* Hide empty photo slots (no image uploaded) in print */
+    .photo-item:has(.photo-upload:not(:has(img))) {
+        display: none !important;
+    }
+    
     /* Ensure colors print */
     .project-info td,
     .project-info th,
@@ -409,6 +414,11 @@ h1 {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+}
+
+/* No dashed border when photo is uploaded */
+.photo-upload:has(img) {
+    border: none;
 }
 
 .photo-label {
